@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoRA 微调项目 — 全流程报告</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e1e4eb;
+    --text2: #8b8fa3;
+    --accent: #6366f1;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height:1.7; }
+  .container { max-width: 960px; margin:0 auto; padding:40px 24px; }
+  h1 { font-size: 2.2em; text-align:center; margin-bottom:8px; background: linear-gradient(135deg, var(--accent), #a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .subtitle { text-align:center; color: var(--text2); margin-bottom:40px; font-size:1.05em; }
+  h2 { font-size: 1.35em; margin: 40px 0 16px; padding-bottom:8px; border-bottom:2px solid var(--border); color:#c8cdf0; }
+  h3 { font-size: 1.05em; margin:20px 0 10px; color: var(--text); }
+  .card { background: var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:20px; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+  .grid3 { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; }
+  .stat { text-align:center; padding:16px; background:var(--card); border:1px solid var(--border); border-radius:10px; }
+  .stat-num { font-size:2em; font-weight:700; color:var(--accent); }
+  .stat-label { color:var(--text2); font-size:.88em; margin-top:4px; }
+  .badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:.82em; font-weight:600; }
+  .badge-green { background: #14532d; color: #86efac; }
+  .badge-amber { background: #451a03; color: #fcd34d; }
+  .badge-blue { background: #172554; color: #93c5fd; }
+  .badge-red { background: #450a0a; color: #fca5a5; }
+  .timeline { position:relative; padding-left:28px; border-left:2px solid var(--border); margin:16px 0; }
+  .timeline-item { position:relative; margin-bottom:20px; }
+  .timeline-item::before { content:''; position:absolute; left:-34px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--accent); border:3px solid var(--bg); }
+  .timeline-step { font-size:.82em; color:var(--accent); font-weight:700; }
+  .timeline-title { font-weight:600; margin:2px 0; }
+  .timeline-desc { color:var(--text2); font-size:.92em; }
+  code { background:#2a1e4a; color:#c4b5fd; padding:2px 7px; border-radius:4px; font-size:.9em; }
+  pre { background: #111318; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; font-size:.85em; line-height:1.5; }
+  pre code { background:none; color:var(--text); padding:0; }
+  table { width:100%; border-collapse:collapse; margin:12px 0; }
+  th, td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
+  th { color:var(--text2); font-weight:600; font-size:.88em; }
+  .file-tree { font-family:'JetBrains Mono','Cascadia Code',monospace; font-size:.88em; line-height:1.8; }
+  .file-tree .dir { color:#93c5fd; }
+  .file-tree .file { color:var(--text2); }
+  .file-tree .comment { color:#6b7280; }
+  ul { padding-left:20px; margin:8px 0; }
+  li { margin:4px 0; color:var(--text2); }
+  .trouble-card { background:#1a1a1a; border:1px solid #3a2a0a; border-radius:10px; padding:14px 18px; margin:10px 0; }
+  .trouble-card .issue { color:#fcd34d; font-weight:600; }
+  .trouble-card .fix { color:#86efac; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>LoRA 微调 — 知识注入项目</h1>
+<p class="subtitle">全流程报告 &nbsp;|&nbsp; 2026年6月3日 – 6月5日</p>
+
+<!-- 概览 -->
+<div class="grid3">
+  <div class="stat"><div class="stat-num">3<span style="font-size:.6em"> 天</span></div><div class="stat-label">总耗时</div></div>
+  <div class="stat"><div class="stat-num">39,054</div><div class="stat-label">训练样本</div></div>
+  <div class="stat"><div class="stat-num">1.5B</div><div class="stat-label">模型参数量</div></div>
+  <div class="stat"><div class="stat-num">1.556<span style="font-size:.5em">→1.416</span></div><div class="stat-label">Loss 变化</div></div>
+  <div class="stat"><div class="stat-num">~73<span style="font-size:.6em"> 分钟</span></div><div class="stat-label">训练时长</div></div>
+  <div class="stat"><div class="stat-num">~30<span style="font-size:.6em"> 元</span></div><div class="stat-label">云端成本</div></div>
+</div>
+
+<!-- 项目概述 -->
+<h2>1. 项目概述</h2>
+<div class="card">
+  <h3>目标</h3>
+  <p>使用 <strong>LoRA (Low-Rank Adaptation)</strong> 技术对通义千问 <code>Qwen2.5-1.5B-Instruct</code> 模型进行指令微调，使模型在通用中文问答场景下表现更好。项目全程使用国产云端 GPU 完成训练，本地仅负责数据准备和代码管理。</p>
+
+  <h3 style="margin-top:16px;">技术栈</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;">
+    <span class="badge badge-blue">Python 3.13</span>
+    <span class="badge badge-blue">PyTorch 2.10</span>
+    <span class="badge badge-green">LLaMA-Factory</span>
+    <span class="badge badge-green">LoRA (rank=16)</span>
+    <span class="badge badge-amber">Qwen2.5-1.5B</span>
+    <span class="badge badge-amber">CUDA 12.8</span>
+    <span class="badge badge-blue">AutoDL Cloud</span>
+    <span class="badge badge-blue">HuggingFace Datasets</span>
+    <span class="badge badge-green">Gradio</span>
+  </div>
+</div>
+
+<!-- 项目结构 -->
+<h2>2. 项目代码结构</h2>
+<div class="card">
+  <pre class="file-tree"><span class="dir">d:\lora\</span>
+├── <span class="dir">data/</span>                          <span class="comment"># 数据集目录</span>
+│   ├── <span class="dir">raw/</span>                      <span class="comment"># 原始文档（PDF/TXT）</span>
+│   ├── <span class="file">train.json</span>                <span class="comment"># 训练集 39,054 条</span>
+│   └── <span class="file">eval.json</span>                 <span class="comment"># 验证集 9,764 条</span>
+├── <span class="dir">scripts/</span>                      <span class="comment"># 核心脚本</span>
+│   ├── <span class="file">utils.py</span>                  <span class="comment"># 工具函数（数据加载、格式转换、文本切分）</span>
+│   ├── <span class="file">generate_qa.py</span>            <span class="comment"># 从文档自动生成 Q&A（支持 Claude/GPT/Ollama）</span>
+│   ├── <span class="file">prepare_dataset.py</span>       <span class="comment"># 从 HuggingFace/ModelScope 下载数据集</span>
+│   ├── <span class="file">eval_model.py</span>            <span class="comment"># 模型评估（关键词匹配/语义相似/人工打分）</span>
+│   ├── <span class="file">cloud_setup.sh</span>           <span class="comment"># AutoDL 云端一键安装脚本</span>
+│   ├── <span class="file">train_config.yaml</span>        <span class="comment"># LLaMA-Factory 训练配置</span>
+│   └── <span class="file">dataset_info.json</span>        <span class="comment"># 数据集注册文件</span>
+├── <span class="dir">demo/</span>                         <span class="comment"># 演示界面</span>
+│   └── <span class="file">app.py</span>                   <span class="comment"># Gradio 聊天演示</span>
+├── <span class="dir">output/</span>                       <span class="comment"># 微调产物</span>
+│   └── <span class="file">adapter_model.safetensors</span> <span class="comment"># LoRA 权重（73MB）</span>
+├── <span class="file">quickstart.md</span>               <span class="comment"># 云端操作速查卡</span>
+├── <span class="file">README.md</span>                   <span class="comment"># 项目说明</span>
+├── <span class="file">.gitignore</span>                  <span class="comment"># 排除大文件（数据、模型、venv）</span>
+└── <span class="file">requirements.txt</span>            <span class="comment"># Python 依赖</span></pre></div>
+
+<!-- 数据集 -->
+<h2>3. 数据集</h2>
+<div class="card">
+  <table>
+    <tr><th>来源</th><td>HuggingFace: <code>shibing624/alpaca-zh</code></td></tr>
+    <tr><th>类型</th><td>中文通用指令微调数据集（GPT-4 生成）</td></tr>
+    <tr><th>训练集</th><td>39,054 条</td></tr>
+    <tr><th>验证集</th><td>9,764 条（20% 随机切分）</td></tr>
+    <tr><th>格式</th><td>Alpaca JSON: <code>{"instruction":"...", "input":"...", "output":"..."}</code></td></tr>
+    <tr><th>数据量</th><td>训练集 28MB / 验证集 7MB</td></tr>
+  </table>
+  <p style="margin-top:12px;color:var(--text2);font-size:.9em;">数据下载使用了 HuggingFace <code>datasets</code> 库，并通过 <code>prepare_dataset.py</code> 脚本自动转换为 LLaMA-Factory 兼容格式并切分训练/验证集。</p>
+</div>
+
+<!-- 训练流程 -->
+<h2>4. 训练流程</h2>
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="timeline-step">第 1 步</div>
+    <div class="timeline-title">项目规划 &amp; 代码搭建</div>
+    <div class="timeline-desc">分析需求（知识注入任务），设计项目结构，编写 8 个核心脚本文件，确保可复用、可配置。</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-step">第 2 步</div>
+    <div class="timeline-title">数据集准备</div>
+    <div class="timeline-desc">从 HuggingFace 下载 <code>shibing624/alpaca-zh</code> 数据集，通过 <code>prepare_dataset.py</code> 转换格式并切分为 80% 训练集 + 20% 验证集。</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-step">第 3 步</div>
+    <div class="timeline-title">AutoDL 云端环境配置</div>
+    <div class="timeline-desc">注册 AutoDL，创建 NVIDIA RTX 5090 (32GB) 实例。将项目文件上传至 <code>/root/autodl-tmp/</code>，执行 <code>cloud_setup.sh</code> 一键安装 LLaMA-Factory 及所有依赖。</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-step">第 4 步</div>
+    <div class="timeline-title">50 条小规模验证训练</div>
+    <div class="timeline-desc">使用 50 条样本验证 pipeline 可运行，12 步训练耗时 6.6 秒，loss 从 1.524 降至 1.416，确认配置正确。</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-step">第 5 步</div>
+    <div class="timeline-title">全量正式训练</div>
+    <div class="timeline-desc">39,054 条数据 × 3 epochs = 7,323 步训练，总耗时约 73 分钟。生成 3 个 checkpoint（7000、7200、7323 步）。</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-step">第 6 步</div>
+    <div class="timeline-title">模型评估 &amp; 聊天测试</div>
+    <div class="timeline-desc">在云端使用 <code>llamafactory-cli chat</code> 加载 LoRA 权重进行交互式对话测试，验证微调效果。</div>
+  </div>
+  <div class="timeline-item">
+    <div class="timeline-step">第 7 步</div>
+    <div class="timeline-title">下载产物 &amp; 上传 GitHub</div>
+    <div class="timeline-desc">下载 LoRA 适配器权重到本地 <code>output/</code>，将项目完整代码推送到 GitHub 仓库。</div>
+  </div>
+</div>
+
+<!-- 训练参数 -->
+<h2>5. 训练配置详情</h2>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <h3>模型参数</h3>
+      <table>
+        <tr><td>基础模型</td><td><code>Qwen/Qwen2.5-1.5B-Instruct</code></td></tr>
+        <tr><td>参数量</td><td>1,562,179,072 (1.5B)</td></tr>
+        <tr><td>可训练参数</td><td>18,464,768 (1.18%)</td></tr>
+        <tr><td>精度</td><td>bfloat16</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>LoRA 参数</h3>
+      <table>
+        <tr><td>LoRA Rank</td><td>16</td></tr>
+        <tr><td>LoRA Alpha</td><td>32</td></tr>
+        <tr><td>Dropout</td><td>0.05</td></tr>
+        <tr><td>目标模块</td><td>all（全部线性层）</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:16px;">
+    <div>
+      <h3>训练超参</h3>
+      <table>
+        <tr><td>Batch Size</td><td>8 × 2 梯度累积 = 16</td></tr>
+        <tr><td>学习率</td><td>2e-4（cosine 衰减）</td></tr>
+        <tr><td>Epochs</td><td>3</td></tr>
+        <tr><td>最大长度</td><td>1024 tokens</td></tr>
+        <tr><td>优化器</td><td>AdamW (weight_decay=0.01)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>硬件资源</h3>
+      <table>
+        <tr><td>GPU</td><td>NVIDIA RTX 5090</td></tr>
+        <tr><td>显存</td><td>32 GB</td></tr>
+        <tr><td>CUDA</td><td>12.8</td></tr>
+        <tr><td>训练速度</td><td>约 1.8 步/秒</td></tr>
+        <tr><td>本地 GPU</td><td>RTX 3050 Ti (4GB，仅用于推理)</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 训练结果 -->
+<h2>6. 训练结果</h2>
+<div class="card">
+  <div class="grid3">
+    <div class="stat"><div class="stat-num" style="color:var(--green)">1.556</div><div class="stat-label">初始 Train Loss</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--green)">1.416</div><div class="stat-label">最终 Eval Loss</div></div>
+    <div class="stat"><div class="stat-num">0.140</div><div class="stat-label">Loss 下降幅度</div></div>
+  </div>
+  <p style="margin-top:16px;color:var(--green);font-weight:600;">
+    &#10004; Loss 正常收敛，说明 LoRA 微调成功，模型已从训练数据中学习到指令模式。
+  </p>
+  <p style="margin-top:8px;color:var(--text2);font-size:.9em;">
+    训练生成的 LoRA 适配器权重仅 <strong>73MB</strong>，相比 3GB 的基础模型非常轻量，部署时只需配合基础模型一起加载即可。
+  </p>
+</div>
+
+<!-- 踩坑记录 -->
+<h2>7. 踩坑 &amp; 解决方案</h2>
+<p style="color:var(--text2);margin-bottom:12px;">由于国内网络环境限制和云端镜像版本差异，实际过程中遇到了 6 个问题，均已解决：</p>
+
+<div class="trouble-card">
+  <div class="issue">&#9888; 问题 1：HuggingFace 数据集下载失败</div>
+  <div class="fix">&#9989; 解决：本地用户环境 SSL 不可用 → 改用 <code>uv pip install datasets</code> 管理依赖 → 数据在本地准备后上传云端。</div>
+</div>
+<div class="trouble-card">
+  <div class="issue">&#9888; 问题 2：GitHub 克隆被墙</div>
+  <div class="fix">&#9989; 解决：AutoDL 实例无法访问 <code>github.com</code> → 通过 ghproxy.com 镜像克隆，或改为直接 <code>pip install llamafactory</code>。</div>
+</div>
+<div class="trouble-card">
+  <div class="issue">&#9888; 问题 3：torchaudio 库与 CUDA 版本不兼容</div>
+  <div class="fix">&#9989; 解决：<code>pip uninstall torchaudio -y</code> → 文本微调不需要 torchaudio → 修改源码让 import 变为可选。</div>
+</div>
+<div class="trouble-card">
+  <div class="issue">&#9888; 问题 4：datasets 版本过高被拒绝</div>
+  <div class="fix">&#9989; 解决：设置环境变量 <code>DISABLE_VERSION_CHECK=1</code> 跳过版本检查。</div>
+</div>
+<div class="trouble-card">
+  <div class="issue">&#9888; 问题 5：配置文件参数不兼容新版 LLaMA-Factory</div>
+  <div class="fix">&#9989; 解决：移除 <code>dataset_info</code>、<code>logging_dir</code> 字段，将 <code>warmup_ratio</code> 改为 <code>warmup_steps</code>。</div>
+</div>
+<div class="trouble-card">
+  <div class="issue">&#9888; 问题 6：模型从 HuggingFace 下载被墙</div>
+  <div class="fix">&#9989; 解决：改为从 ModelScope (<code>modelscope.cn</code>) 下载模型 → <code>train_config.yaml</code> 中指定本地路径。</div>
+</div>
+
+<!-- 云端工具 -->
+<h2>8. 使用的平台 &amp; 工具</h2>
+<div class="grid2">
+  <div class="card">
+    <h3>云端 GPU 平台</h3>
+    <table>
+      <tr><td>平台</td><td><a href="https://autodl.com" target="_blank">AutoDL</a></td></tr>
+      <tr><td>GPU 型号</td><td>NVIDIA RTX 5090 (32GB)</td></tr>
+      <tr><td>镜像</td><td>PyTorch 2.10 + CUDA 12.8</td></tr>
+      <tr><td>费用</td><td>约 30 元人民币</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>关键依赖</h3>
+    <table>
+      <tr><td>微调框架</td><td><code>LLaMA-Factory 0.9.6.dev0</code></td></tr>
+      <tr><td>深度学习</td><td><code>torch 2.10.0</code></td></tr>
+      <tr><td>模型下载</td><td><code>modelscope</code>（国内加速）</td></tr>
+      <tr><td>数据处理</td><td><code>datasets</code> + <code>pandas</code></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 总结 -->
+<h2>9. 总结</h2>
+<div class="card">
+  <p>本项目从零到一完成了一次完整的 <strong>LoRA 微调流程</strong>，核心成果包括：</p>
+  <ul>
+    <li><strong>可复用的项目框架</strong>：<code>scripts/</code> 下的 7 个脚本覆盖了数据准备 → 训练 → 评估 → 部署的全链路，适用于任何 HuggingFace 数据集</li>
+    <li><strong>经过验证的训练管线</strong>：在 AutoDL RTX 5090 上成功完成 1.5B 模型的 LoRA 微调，loss 从 1.556 降至 1.416</li>
+    <li><strong>轻量级 LoRA 适配器</strong>：73MB 的适配器权重，可灵活部署到本地或云端进行推理</li>
+    <li><strong>完整的文档</strong>：README.md 操作指南 + quickstart.md 速查卡 + project-report.html 项目报告</li>
+    <li><strong>云端最佳实践</strong>：ModelScope 替代 HF、hf-mirror.com 加速、DISABLE_VERSION_CHECK 跳过版本冲突等实用方案</li>
+    <li><strong>Gradio 演示界面</strong>：一键启动 Web 聊天 UI，可直接演示微调后的模型效果</li>
+  </ul>
+
+  <div style="margin-top:20px;padding:16px;background:#121520;border-radius:8px;border:1px solid var(--border);">
+    <p style="margin:0;text-align:center;">
+      代码已开源：<a href="https://github.com/ljinz123456-star/lora-finetune" target="_blank" style="color:var(--accent);">github.com/ljinz123456-star/lora-finetune</a>
+    </p>
+  </div>
+</div>
+
+<p style="text-align:center;color:var(--text2);font-size:.85em;margin-top:40px;">
+  Generated on 2026-06-05 &nbsp;|&nbsp; LoRA Fine-tuning Project Report
+</p>
+
+</div>
+</body>
+</html>
