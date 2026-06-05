@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python -m pip install datasets -q)",
+      "Bash(python -c \"import sys; print\\(sys.executable\\); print\\(sys.version\\)\")",
+      "Read(//c/python//**)",
+      "Bash(python -m ensurepip --default-pip)",
+      "Bash(curl -sS https://bootstrap.pypa.io/get-pip.py)",
+      "Bash(python)",
+      "Bash(python -c \"import urllib.request, json, os; print\\('urllib works'\\)\")",
+      "Bash(curl --version)",
+      "Bash(wget --version)",
+      "Bash(where uv *)",
+      "Bash(uv pip *)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import sys; print\\('\\\\n'.join\\(sys.path\\)\\)\")",
+      "Bash(python -c \"import site; print\\(site.getsitepackages\\(\\)\\)\")",
+      "Bash(PYTHONPATH='C:\\\\python\\\\Lib\\\\site-packages' python -c ' *)",
+      "Bash(curl -s \"https://datasets-server.huggingface.co/rows?dataset=shibing624/alpaca-zh&config=default&split=train&offset=0&length=2\")",
+      "Bash(curl -v \"https://datasets-server.huggingface.co/rows?dataset=shibing624/alpaca-zh&config=default&split=train&offset=0&length=1\")"
+    ]
+  }
+}

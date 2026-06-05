@@ -1,0 +1,66 @@
+# LLaMA-Factory LoRA 微调配置文件
+# 将本文件上传到 AutoDL 实例的 /root/autodl-tmp/LLaMA-Factory/examples/train_lora/
+#
+# 使用方法:
+#   cd /root/autodl-tmp/LLaMA-Factory
+#   llamafactory-cli train examples/train_lora/knowledge_inject.yaml
+
+### ==================== 模型参数 ====================
+model_name_or_path: Qwen/Qwen2.5-1.5B-Instruct
+trust_remote_code: true
+
+### ==================== 数据参数 ====================
+dataset_dir: /root/autodl-tmp/data
+dataset: train                # 对应 dataset_info.json 中的配置
+eval_dataset: eval            # 验证集
+dataset_info: /root/autodl-tmp/scripts/dataset_info.json  # 指向自定义数据集配置
+
+### ==================== 训练参数 ====================
+output_dir: /root/autodl-tmp/output/qwen2.5_1.5b_lora
+logging_dir: /root/autodl-tmp/output/logs
+
+# 阶段: pretrain / sft / rm / ppo
+stage: sft
+do_train: true
+finetuning_type: lora
+
+### ==================== LoRA 参数 ====================
+lora_rank: 16                  # LoRA 秩 (8-64，越大学习能力越强)
+lora_alpha: 32                 # 缩放系数，通常 rank * 2
+lora_target: all               # 目标模块，all = 所有线性层
+lora_dropout: 0.05             # Dropout 防过拟合
+
+# QLoRA (4-bit 量化) — 显存不够时才开启
+# 24GB 显卡训 1.5B 模型不需要量化，用全精度效果更好
+# quantization_bit: 4
+# quantization_method: bitsandbytes
+
+### ==================== 训练超参 ====================
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 8
+gradient_accumulation_steps: 2
+# 有效 batch size = 8 * 2 = 16
+
+learning_rate: 2.0e-4
+num_train_epochs: 3
+max_length: 1024
+packing: false                 # 知识注入建议关闭 packing
+
+### ==================== 优化器 ====================
+warmup_ratio: 0.1
+lr_scheduler_type: cosine
+optim: adamw_torch
+weight_decay: 0.01
+
+### ==================== 日志与保存 ====================
+logging_steps: 10
+save_steps: 200                # 每 200 步保存一个 checkpoint
+save_total_limit: 3            # 最多保留 3 个 checkpoint
+eval_steps: 200                # 每 200 步评估一次
+eval_strategy: steps
+
+### ==================== 其他 ====================
+bf16: true                     # RTX 3090/4090 支持 bf16
+gradient_checkpointing: true   # 节省显存
+report_to: none                # 不上传 wandb/tensorboard
+overwrite_output_dir: true

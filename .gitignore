@@ -1,0 +1,10 @@
+data/train.json
+data/eval.json
+data/raw/*
+output/
+__pycache__/
+*.pyc
+.venv/
+*.bin
+*.safetensors
+*.pt
